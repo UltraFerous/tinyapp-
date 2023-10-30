@@ -13,11 +13,15 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/urls.json", (req, res) => {
+app.get("/urls", (req, res) => { //"/urls.json"
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
