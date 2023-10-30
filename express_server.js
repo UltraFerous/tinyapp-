@@ -41,6 +41,11 @@ app.post("/urls", (req, res) => {
   // res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+});
+
 app.get("/urls", (req, res) => { //"/urls.json"
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
