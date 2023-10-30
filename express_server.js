@@ -38,7 +38,6 @@ app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
   urlDatabase[newURL] = req.body.longURL;
   res.redirect(`/urls/${newURL}`);
-  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/u/:id", (req, res) => {
