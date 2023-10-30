@@ -5,7 +5,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const generateRandomString = function() {
   let string = "";
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const charactersLength = characters.length;
 
   for(let i = 0; i < 6; i++){
@@ -33,6 +33,14 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.post("/urls", (req, res) => {
+  let newURL = generateRandomString();
+  console.log(req.body); // Log the POST request body to the console
+  urlDatabase[newURL] = req.body.longURL;
+  res.redirect(`/urls/${newURL}`);
+  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+
 app.get("/urls", (req, res) => { //"/urls.json"
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -43,10 +51,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
-});
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
