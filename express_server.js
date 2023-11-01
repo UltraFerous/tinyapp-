@@ -95,7 +95,10 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[req.cookies.id],
   };
-  res.render("urls_new", templateVars);
+  if (req.cookies.id === undefined) {
+    return res.redirect(`/login`);
+  }
+  return res.render("urls_new", templateVars);
 });
 
 app.post("/login", (req, res) => {
@@ -104,13 +107,12 @@ app.post("/login", (req, res) => {
 
   for (let index in users) {
     if (users[index].email === email) {
-      if (users[index].password === password) {
-        res.cookie('id', users[index].id);
-        res.redirect(`/urls`);
-      } else {
+      if (users[index].password !== password) {
         res.status(403);
         return res.send("Error 403: That was an invalid login, please try again.");
       }
+      res.cookie('id', users[index].id);
+      res.redirect(`/urls`);
     }
   }
   res.status(403);
