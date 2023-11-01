@@ -129,6 +129,9 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
   console.log(req.body); // Log the POST request body to the console
+  if (req.cookies.id === undefined) {
+    return res.send("You must be logged in to shorten URLs!");
+  }
   urlDatabase[newURL] = req.body.longURL;
   res.redirect(`/urls/${newURL}`);
 });
