@@ -45,7 +45,7 @@ const urlDatabase = {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: users[req.cookies.id],
+    user: users[req.cookies.id],
   };
   res.render("urls_register", templateVars);
 });
@@ -54,6 +54,10 @@ app.post("/register", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
   let userID = generateRandomString();
+
+  if(req.body.password === ""){
+    res.send("Error: No password was entered.");
+  };
 
   for(let keys in users){
     if(users[keys].email === email){
@@ -81,7 +85,7 @@ app.listen(PORT, () => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: users[req.cookies.id],
+    user: users[req.cookies.id],
   };
   res.render("urls_new", templateVars);
 });
@@ -99,8 +103,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/login/", (req, res) => {
-  res.cookie('name', req.body.username);
-  res.redirect(`/urls/`);
+  res.redirect(`/register`);
 });
 
 app.post("/logout/", (req, res) => {
@@ -126,7 +129,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls", (req, res) => { //"/urls.json"
   const templateVars = {
     urls: urlDatabase,
-    username: users[req.cookies.id],
+    user: users[req.cookies.id],
   };
   res.render("urls_index", templateVars);
 });
@@ -134,7 +137,7 @@ app.get("/urls", (req, res) => { //"/urls.json"
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id, longURL: urlDatabase[req.params.id],
-    username: users[req.cookies.id],
+    user: users[req.cookies.id],
   };
   res.render("urls_show", templateVars);
 });
