@@ -120,6 +120,10 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+
+  if (req.cookies.id !== undefined) {
+    return res.redirect(`/urls`);
+  }
   const templateVars = {
     user: users[req.cookies.id],
   };
@@ -155,8 +159,7 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[(req.params.id)];
   if (longURL === undefined) {
     res.statusCode = 404;
-    res.send("Error 404: Page Not Found.");
-    return;
+    return res.send("Error 404: Page Not Found. This URL does not exist.");
   }
   res.redirect(longURL);
 });
