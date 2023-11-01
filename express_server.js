@@ -68,7 +68,7 @@ app.post("/register", (req, res) => {
     res.send("Error: No Username or Password was entered.");
   };
 
-  if(emailValidator(email) === false){
+  if (emailValidator(email) === false) {
     res.status(400);
     res.send("Error: This email has already been used.");
   }
@@ -102,6 +102,19 @@ app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
 
+  for (let index in users) {
+    if (users[index].email === email) {
+      if (users[index].password === password) {
+        res.cookie('id', users[index].id);
+        res.redirect(`/urls`);
+      } else {
+        res.status(403);
+        res.send("Error: That was an invalid login, please try again.");
+      }
+    }
+  }
+  res.status(403);
+  res.send("Error: This account does not exist. Please try again.");
 });
 
 app.get("/login", (req, res) => {
@@ -125,7 +138,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/logout/", (req, res) => {
   res.clearCookie('id');
-  res.redirect(`/urls/`);
+  res.redirect(`/login`);
 });
 
 app.post("/urls/:id", (req, res) => {
@@ -134,7 +147,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[(req.params.id)];
   if (longURL === undefined) {
     res.statusCode = 404;
     res.send("404 Page Not Found.");
