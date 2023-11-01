@@ -35,6 +35,14 @@ const users = {
   }
 };
 
+const emailValidator = function(email) {
+  for (let keys in users) {
+    if (users[keys].email === email) {
+      return false;
+    }
+  }
+  return true;
+};
 
 app.set("view engine", "ejs");
 
@@ -55,21 +63,21 @@ app.post("/register", (req, res) => {
   let password = req.body.password;
   let userID = generateRandomString();
 
-  if(req.body.password === ""){
-    res.send("Error: No password was entered.");
+  if (req.body.password === "" || req.body.password === "") {
+    res.status(400);
+    res.send("Error: No Username or Password was entered.");
   };
 
-  for(let keys in users){
-    if(users[keys].email === email){
-      res.send("Error: This account already exists.");
-    }
+  if(emailValidator(email) === false){
+    res.status(400);
+    res.send("Error: This email has already been used.");
   }
-  
+
   users[userID] = {
     id: userID.toString(),
     email: email.toString(),
-    password: password.toString(), 
-  }
+    password: password.toString(),
+  };
 
   res.cookie('id', userID);
   res.redirect(`/urls`);
@@ -107,7 +115,7 @@ app.post("/login/", (req, res) => {
 });
 
 app.post("/logout/", (req, res) => {
-  res.clearCookie('id'); 
+  res.clearCookie('id');
   res.redirect(`/urls/`);
 });
 
