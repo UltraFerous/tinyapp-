@@ -13,16 +13,16 @@
     </div>
 
     <% if(username){ %>
-      <h5 class="card-title" style="margin-left: 1000px;">
+      <div style="height: 69.667px; padding-top: 15px; display: inline-block;"> 
+      <h5 class="" style="display: inline-block; margin-right: 15px; color: white; padding-top: 7px;">
         Signed in as: <%= username %>!
       </h5>
-      <form class="move-right" action="/logout" method="POST">
-        <button type="submit" style="margin-left: 10px;" class="btn btn-primary">Logout</button>
-        </div>
+    </div>
+      <form class="move-right" style="display: inline-block; margin-bottom: 2px;" action="/logout" method="POST">
+        <button type="submit" class="btn btn-primary">Logout</button>
       </form>
-      <div class="card-footer text-muted"></div>
       <% } else{ %>
-        </div>
+      <!-- </div> -->
         <form class="move-right" action="/login" method="POST">
           <div class="form-group mb-2">
             <input class="move-right" type="text" name="username" placeholder="Username"
@@ -31,7 +31,5 @@
           </div>
         </form>
         <% } %>
-          <div class="card-footer text-muted"></div>
-          </div>
   </nav>
 </header>
