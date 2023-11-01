@@ -98,6 +98,19 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.post("/login", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies.id],
+  };
+  res.render("urls_login", templateVars);
+});
+
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
   console.log(req.body); // Log the POST request body to the console
@@ -108,10 +121,6 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[(req.params.id)];
   res.redirect(`/urls/`);
-});
-
-app.post("/login/", (req, res) => {
-  res.redirect(`/register`);
 });
 
 app.post("/logout/", (req, res) => {

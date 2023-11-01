@@ -23,13 +23,20 @@
       </form>
       <% } else{ %>
       </div>
-        <form class="move-right" action="/login" method="POST"> 
+        <form class="move-right" action="/login" method="GET"> 
           <div class="form-group mb-2">
-            <input class="move-right" type="text" name="username" placeholder="Username"
-              style="width: 300px; margin: 1em" />
-            <button type="submit" class="btn btn-primary">Submit</button> 
+            <button type="submit" class="btn btn-primary">LOGIN</button> 
           </div>
         </form>
+      </div>
+      <form class="move-right" style="margin-left: 10px;"action="/register" method="GET"> 
+        <div class="form-group mb-2">
+          <button type="submit" class="btn btn-primary">REGISTER</button> 
+        </div>
+      </form>
         <% } %>
   </nav>
 </header>
+
+            <!-- <input class="move-right" type="text" name="username" placeholder="Username"
+              style="width: 300px; margin: 1em" /> -->
