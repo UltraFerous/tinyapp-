@@ -65,12 +65,12 @@ app.post("/register", (req, res) => {
 
   if (req.body.password === "" || req.body.password === "") {
     res.status(400);
-    res.send("Error: No Username or Password was entered.");
+    return res.send("Error: No Username or Password was entered.");
   };
 
   if (emailValidator(email) === false) {
     res.status(400);
-    res.send("Error: This email has already been used.");
+    return res.send("Error: This email has already been used.");
   }
 
   users[userID] = {
@@ -80,7 +80,7 @@ app.post("/register", (req, res) => {
   };
 
   res.cookie('id', userID);
-  res.redirect(`/urls`);
+  return res.redirect(`/urls`);
 });
 
 app.get("/", (req, res) => {
@@ -109,12 +109,12 @@ app.post("/login", (req, res) => {
         res.redirect(`/urls`);
       } else {
         res.status(403);
-        res.send("Error: That was an invalid login, please try again.");
+        return res.send("Error 403: That was an invalid login, please try again.");
       }
     }
   }
   res.status(403);
-  res.send("Error: This account does not exist. Please try again.");
+  res.send("Error 403: This account does not exist. Please try again.");
 });
 
 app.get("/login", (req, res) => {
@@ -150,7 +150,7 @@ app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[(req.params.id)];
   if (longURL === undefined) {
     res.statusCode = 404;
-    res.send("404 Page Not Found.");
+    res.send("Error 404: Page Not Found.");
     return;
   }
   res.redirect(longURL);
