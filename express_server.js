@@ -28,6 +28,11 @@ const users = {
     email: "c@d.ca", //user2@example.com
     password: "123", //dishwasher-funk
   },
+  admin: {
+    id: "admin",
+    email: "admin@admin.com",
+    password: "admin", 
+  },
   undefined: {
     id: undefined,
     email: undefined, //user2@example.com
@@ -49,22 +54,18 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "Default"
-  },
-  "test": {
-    longURL: "https://www.reddit.com/",
-    userID: "test"
+    userID: "admin"
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: "Default"
+    userID: "admin"
   }
 };
 
 const filterDataBase = function(database, key){
   let returnKey = {};
   for(let shortURLs in database){
-    if(database[shortURLs].userID === key || database[shortURLs].userID === 'Default'){
+    if(database[shortURLs].userID === key || database[shortURLs].userID === 'admin'){
       returnKey[shortURLs] = database[shortURLs];
     }
   }
@@ -163,8 +164,14 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  if(typeof urlDatabase[req.params.id] === 'undefined'){
+    return res.send("Error: This URL is undefined.")
+  }
   if(urlDatabase[req.params.id].userID !== req.cookies.id){
-    return res.send("Error: You do not have permission to edit this URL.");
+    return res.send("Error: You do not have permission to delete this URL.");
+  }
+  if(req.cookies.id === undefined){
+    return res.send("Error: Please login first or create an account.")
   }
   delete urlDatabase[(req.params.id)];
   res.redirect(`/urls/`);
@@ -176,7 +183,7 @@ app.post("/logout/", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  if(urlDatabase[req.params.id].id !== req.cookies.id){
+  if(urlDatabase[req.params.id].userID !== req.cookies.id){
     return res.send("Error: You do not have permission to edit this URL.");
   }
   urlDatabase[(req.params.id)].longURL = req.body.longURL;
@@ -209,7 +216,7 @@ app.get("/urls/:id", (req, res) => {
     return res.send("Error: This URL is undefined.")
   }
   if(req.cookies.id === undefined){
-    return res.send("Error: Please login first.")
+    return res.send("Error: Please login first or create an account.")
   }
   if(urlDatabase[req.params.id].userID !== req.cookies.id){
     return res.send("Error: You do not have permission to edit this URL.");

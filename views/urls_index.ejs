@@ -26,6 +26,26 @@
         </thead>
         <tbody>
           <% for (let id in urls) { %>
+            <% if(id === "b2xVn2" || id === "9sm5xK") {%>
+              <tr>
+                <td>
+                  <%= id %>
+                </td>
+                <td>
+                  <%= urls[id].longURL %>
+                </td>
+                <td>
+                  <form method="GET" action=<%=`/urls/${id}`%>>
+                    <button type="submit" class="btn btn-warning" disabled>Edit</button>
+                  </form>
+                </td>
+                <td>
+                  <form method="POST" action=<%=`/urls/${id}/delete`%>>
+                    <button type="submit" class="btn btn-danger" disabled>Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }else{ %>
             <tr>
               <td>
                 <%= id %>
@@ -44,6 +64,7 @@
                 </form>
               </td>
             </tr>
+            <% } %>
             <% } %>
         </tbody>
       </table>
