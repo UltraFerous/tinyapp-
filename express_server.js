@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
   keys: ['45rq4w4r8w84r847qw874r78'],
@@ -12,6 +13,7 @@ app.use(cookieSession({
 }));
 app.use(express.urlencoded({ extended: true }));
 
+const { emailValidator, getUserByEmail } = require('./helpers');
 
 const generateRandomString = function() {
   let string = "";
@@ -27,21 +29,11 @@ const generateRandomString = function() {
 const users = {
   undefined: {
     id: undefined,
-    email: undefined, 
-    password: undefined, 
+    email: undefined,
+    password: undefined,
   }
 };
 
-const emailValidator = function(email) {
-  for (let keys in users) {
-    if (users[keys].email === email) {
-      return false;
-    }
-  }
-  return true;
-};
-
-app.set("view engine", "ejs");
 
 const urlDatabase = {
   "b2xVn2": {
@@ -81,7 +73,7 @@ app.post("/register", (req, res) => {
     return res.send("Error: No Username or Password was entered.");
   };
 
-  if (emailValidator(email) === false) {
+  if (emailValidator(email, users) === false) {
     res.status(400);
     return res.send("Error: This email has already been used.");
   }
@@ -117,18 +109,22 @@ app.get("/urls/new", (req, res) => {
 app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
+  let currentUser = getUserByEmail(email, users);
 
-
-  for (let index in users) {
-    if (users[index].email === email) {
-      if (!bcrypt.compareSync(password, users[index].password)) {
-        res.status(403);
-        return res.send("Error 403: That was an invalid login, please try again.");
-      }
-      req.session.id = users[index].id;
-      res.redirect(`/urls`);
-    }
+  if(typeof currentUser === 'undefined'){
+    res.status(403);
+    return res.send("Error 403: That was an invalid login, please try again.");
   }
+
+  if (currentUser.email === email) {
+    if (!bcrypt.compareSync(password, currentUser.password)) {
+      res.status(403);
+      return res.send("Error 403: That was an invalid login, please try again.");
+    }
+    req.session.id = currentUser.id;
+    res.redirect(`/urls`);
+  }
+
   res.status(403);
   res.send("Error 403: This account does not exist. Please try again.");
 });
