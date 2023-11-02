@@ -1,8 +1,10 @@
+const PORT = 8080; // default port 8080
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const { emailValidator, getUserByEmail, generateRandomString, filterDataBase } = require('./helpers');
+
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
@@ -13,19 +15,6 @@ app.use(cookieSession({
 }));
 app.use(express.urlencoded({ extended: true }));
 
-const { emailValidator, getUserByEmail } = require('./helpers');
-
-const generateRandomString = function() {
-  let string = "";
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-
-  for (let i = 0; i < 6; i++) {
-    string += characters[(Math.floor(Math.random() * charactersLength))];
-  }
-  return string;
-};
-
 const users = {
   undefined: {
     id: undefined,
@@ -33,7 +22,6 @@ const users = {
     password: undefined,
   }
 };
-
 
 const urlDatabase = {
   "b2xVn2": {
@@ -46,15 +34,13 @@ const urlDatabase = {
   }
 };
 
-const filterDataBase = function(database, key) {
-  let returnKey = {};
-  for (let shortURLs in database) {
-    if (database[shortURLs].userID === key || database[shortURLs].userID === 'admin') {
-      returnKey[shortURLs] = database[shortURLs];
-    }
-  }
-  return returnKey;
-};
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
+
+app.get("/", (req, res) => {
+  res.redirect(`/register`);
+});
 
 app.get("/register", (req, res) => {
   const templateVars = {
@@ -71,7 +57,7 @@ app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400);
     return res.send("Error: No Username or Password was entered.");
-  };
+  }
 
   if (emailValidator(email, users) === false) {
     res.status(400);
@@ -88,13 +74,6 @@ app.post("/register", (req, res) => {
   return res.redirect(`/urls`);
 });
 
-app.get("/", (req, res) => {
-  res.redirect(`/register`);
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -104,29 +83,6 @@ app.get("/urls/new", (req, res) => {
     return res.redirect(`/login`);
   }
   return res.render("urls_new", templateVars);
-});
-
-app.post("/login", (req, res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  let currentUser = getUserByEmail(email, users);
-
-  if(typeof currentUser === 'undefined'){
-    res.status(403);
-    return res.send("Error 403: That was an invalid login, please try again.");
-  }
-
-  if (currentUser.email === email) {
-    if (!bcrypt.compareSync(password, currentUser.password)) {
-      res.status(403);
-      return res.send("Error 403: That was an invalid login, please try again.");
-    }
-    req.session.id = currentUser.id;
-    res.redirect(`/urls`);
-  }
-
-  res.status(403);
-  res.send("Error 403: This account does not exist. Please try again.");
 });
 
 app.get("/login", (req, res) => {
@@ -139,16 +95,36 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  let newURL = generateRandomString();
-  if (req.session.id === undefined) {
-    return res.send("You must be logged in to shorten URLs!");
+app.post("/login", (req, res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  let userRequest = getUserByEmail(email, users);
+  
+  if (typeof userRequest === 'undefined') {
+    res.status(403);
+    return res.send("Error 403: That was an invalid login, please try again.");
   }
-  urlDatabase[newURL] = {
-    longURL: req.body.longURL,
-    userID: req.session.id
-  };
-  res.redirect(`/urls/${newURL}`);
+  
+  if (userRequest.email === email) {
+    if (!bcrypt.compareSync(password, userRequest.password)) {
+      res.status(403);
+      return res.send("Error 403: That was an invalid login, please try again.");
+    }
+    req.session.id = userRequest.id;
+    res.redirect(`/urls`);
+  }
+  
+  res.status(403);
+  res.send("Error 403: This account does not exist. Please try again.");
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[(req.params.id)].longURL;
+  if (longURL === undefined) {
+    res.statusCode = 404;
+    return res.send("Error 404: Page Not Found. This URL does not exist.");
+  }
+  res.redirect(longURL);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -170,23 +146,6 @@ app.post("/logout/", (req, res) => {
   res.redirect(`/login`);
 });
 
-app.post("/urls/:id", (req, res) => {
-  if (urlDatabase[req.params.id].userID !== req.session.id) {
-    return res.send("Error: You do not have permission to edit this URL.");
-  }
-  urlDatabase[(req.params.id)].longURL = req.body.longURL;
-  res.redirect(`/urls/`);
-});
-
-app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[(req.params.id)].longURL;
-  if (longURL === undefined) {
-    res.statusCode = 404;
-    return res.send("Error 404: Page Not Found. This URL does not exist.");
-  }
-  res.redirect(longURL);
-});
-
 app.get("/urls", (req, res) => { //"/urls.json"
   if (req.session.id === undefined) {
     return res.send("You must be logged in to view shorten URLs!");
@@ -196,6 +155,18 @@ app.get("/urls", (req, res) => { //"/urls.json"
     user: users[req.session.id],
   };
   res.render("urls_index", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  let newURL = generateRandomString();
+  if (req.session.id === undefined) {
+    return res.send("You must be logged in to shorten URLs!");
+  }
+  urlDatabase[newURL] = {
+    longURL: req.body.longURL,
+    userID: req.session.id
+  };
+  res.redirect(`/urls/${newURL}`);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -214,6 +185,14 @@ app.get("/urls/:id", (req, res) => {
     user: users[req.session.id],
   };
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls/:id", (req, res) => {
+  if (urlDatabase[req.params.id].userID !== req.session.id) {
+    return res.send("Error: You do not have permission to edit this URL.");
+  }
+  urlDatabase[(req.params.id)].longURL = req.body.longURL;
+  res.redirect(`/urls/`);
 });
 
 app.get("/hello", (req, res) => {
