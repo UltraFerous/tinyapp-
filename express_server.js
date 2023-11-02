@@ -1,9 +1,15 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['45rq4w4r8w84r847qw874r78'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -60,7 +66,7 @@ const filterDataBase = function(database, key) {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.id],
+    user: users[req.session.id],
   };
   res.render("urls_register", templateVars);
 });
@@ -86,12 +92,12 @@ app.post("/register", (req, res) => {
     password: password.toString(),
   };
 
-  res.cookie('id', userID);
+  req.session.id = userID;
   return res.redirect(`/urls`);
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect(`/register`);
 });
 
 app.listen(PORT, () => {
@@ -100,9 +106,9 @@ app.listen(PORT, () => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies.id],
+    user: users[req.session.id],
   };
-  if (req.cookies.id === undefined) {
+  if (req.session.id === undefined) {
     return res.redirect(`/login`);
   }
   return res.render("urls_new", templateVars);
@@ -119,7 +125,7 @@ app.post("/login", (req, res) => {
         res.status(403);
         return res.send("Error 403: That was an invalid login, please try again.");
       }
-      res.cookie('id', users[index].id);
+      req.session.id = users[index].id;
       res.redirect(`/urls`);
     }
   }
@@ -128,24 +134,23 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (req.cookies.id !== undefined) {
+  if (req.session.id !== undefined) {
     return res.redirect(`/urls`);
   }
   const templateVars = {
-    user: users[req.cookies.id],
+    user: users[req.session.id],
   };
   res.render("urls_login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let newURL = generateRandomString();
-  console.log(req.body); // Log the POST request body to the console
-  if (req.cookies.id === undefined) {
+  if (req.session.id === undefined) {
     return res.send("You must be logged in to shorten URLs!");
   }
   urlDatabase[newURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies.id
+    userID: req.session.id
   };
   res.redirect(`/urls/${newURL}`);
 });
@@ -154,10 +159,10 @@ app.post("/urls/:id/delete", (req, res) => {
   if (typeof urlDatabase[req.params.id] === 'undefined') {
     return res.send("Error: This URL is undefined.");
   }
-  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
+  if (urlDatabase[req.params.id].userID !== req.session.id) {
     return res.send("Error: You do not have permission to delete this URL.");
   }
-  if (req.cookies.id === undefined) {
+  if (req.session.id === undefined) {
     return res.send("Error: Please login first or create an account.");
   }
   delete urlDatabase[(req.params.id)];
@@ -165,12 +170,12 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/logout/", (req, res) => {
-  res.clearCookie('id');
+  req.session = null;
   res.redirect(`/login`);
 });
 
 app.post("/urls/:id", (req, res) => {
-  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
+  if (urlDatabase[req.params.id].userID !== req.session.id) {
     return res.send("Error: You do not have permission to edit this URL.");
   }
   urlDatabase[(req.params.id)].longURL = req.body.longURL;
@@ -187,14 +192,12 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls", (req, res) => { //"/urls.json"
-  console.log(users);
-  if (req.cookies.id === undefined) {
+  if (req.session.id === undefined) {
     return res.send("You must be logged in to view shorten URLs!");
   }
-  console.log(urlDatabase);
   const templateVars = {
-    urls: filterDataBase(urlDatabase, req.cookies.id),
-    user: users[req.cookies.id],
+    urls: filterDataBase(urlDatabase, req.session.id),
+    user: users[req.session.id],
   };
   res.render("urls_index", templateVars);
 });
@@ -203,16 +206,16 @@ app.get("/urls/:id", (req, res) => {
   if (typeof urlDatabase[req.params.id] === 'undefined') {
     return res.send("Error: This URL is undefined.");
   }
-  if (req.cookies.id === undefined) {
+  if (req.session.id === undefined) {
     return res.send("Error: Please login first or create an account.");
   }
-  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
+  if (urlDatabase[req.params.id].userID !== req.session.id) {
     return res.send("Error: You do not have permission to edit this URL.");
   }
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.cookies.id],
+    user: users[req.session.id],
   };
   res.render("urls_show", templateVars);
 });
