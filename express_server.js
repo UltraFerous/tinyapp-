@@ -163,6 +163,9 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
+  if(urlDatabase[req.params.id].userID !== req.cookies.id){
+    return res.send("Error: You do not have permission to edit this URL.");
+  }
   delete urlDatabase[(req.params.id)];
   res.redirect(`/urls/`);
 });
@@ -173,7 +176,10 @@ app.post("/logout/", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[(req.params.id)] = req.body.longURL;
+  if(urlDatabase[req.params.id].id !== req.cookies.id){
+    return res.send("Error: You do not have permission to edit this URL.");
+  }
+  urlDatabase[(req.params.id)].longURL = req.body.longURL;
   res.redirect(`/urls/`);
 });
 
@@ -205,7 +211,7 @@ app.get("/urls/:id", (req, res) => {
   if(req.cookies.id === undefined){
     return res.send("Error: Please login first.")
   }
-  if(urlDatabase[req.params.id].id !== req.cookies.id){
+  if(urlDatabase[req.params.id].userID !== req.cookies.id){
     return res.send("Error: You do not have permission to edit this URL.");
   }
   const templateVars = {
