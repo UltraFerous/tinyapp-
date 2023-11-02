@@ -47,8 +47,28 @@ const emailValidator = function(email) {
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "Default"
+  },
+  "test": {
+    longURL: "https://www.reddit.com/",
+    userID: "test"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "Default"
+  }
+};
+
+const filterDataBase = function(database, key){
+  let returnKey = {};
+  for(let shortURLs in database){
+    if(database[shortURLs].userID === key || database[shortURLs].userID === 'Default'){
+      returnKey[shortURLs] = database[shortURLs];
+    }
+  }
+  return returnKey;
 };
 
 app.get("/register", (req, res) => {
@@ -120,7 +140,6 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-
   if (req.cookies.id !== undefined) {
     return res.redirect(`/urls`);
   }
@@ -136,7 +155,10 @@ app.post("/urls", (req, res) => {
   if (req.cookies.id === undefined) {
     return res.send("You must be logged in to shorten URLs!");
   }
-  urlDatabase[newURL] = req.body.longURL;
+  urlDatabase[newURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies.id
+  };
   res.redirect(`/urls/${newURL}`);
 });
 
@@ -156,7 +178,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[(req.params.id)];
+  const longURL = urlDatabase[(req.params.id)].longURL;
   if (longURL === undefined) {
     res.statusCode = 404;
     return res.send("Error 404: Page Not Found. This URL does not exist.");
@@ -165,16 +187,30 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls", (req, res) => { //"/urls.json"
+  if (req.cookies.id === undefined) {
+    return res.send("You must be logged in to view shorten URLs!");
+  }
+  console.log(urlDatabase);
   const templateVars = {
-    urls: urlDatabase,
+    urls: filterDataBase(urlDatabase, req.cookies.id),
     user: users[req.cookies.id],
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
+  if(typeof urlDatabase[req.params.id] === 'undefined'){
+    return res.send("Error: This URL is undefined.")
+  }
+  if(req.cookies.id === undefined){
+    return res.send("Error: Please login first.")
+  }
+  if(urlDatabase[req.params.id].id !== req.cookies.id){
+    return res.send("Error: You do not have permission to edit this URL.");
+  }
   const templateVars = {
-    id: req.params.id, longURL: urlDatabase[req.params.id],
+    id: req.params.id, 
+    longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies.id],
   };
   res.render("urls_show", templateVars);
