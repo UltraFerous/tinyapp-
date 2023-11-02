@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
@@ -18,25 +19,10 @@ const generateRandomString = function() {
 };
 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "a@b.com", //user@example.com
-    password: "123", //purple-monkey-dinosaur
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "c@d.ca", //user2@example.com
-    password: "123", //dishwasher-funk
-  },
-  admin: {
-    id: "admin",
-    email: "admin@admin.com",
-    password: "admin", 
-  },
   undefined: {
     id: undefined,
-    email: undefined, //user2@example.com
-    password: undefined, //dishwasher-funk
+    email: undefined, 
+    password: undefined, 
   }
 };
 
@@ -62,10 +48,10 @@ const urlDatabase = {
   }
 };
 
-const filterDataBase = function(database, key){
+const filterDataBase = function(database, key) {
   let returnKey = {};
-  for(let shortURLs in database){
-    if(database[shortURLs].userID === key || database[shortURLs].userID === 'admin'){
+  for (let shortURLs in database) {
+    if (database[shortURLs].userID === key || database[shortURLs].userID === 'admin') {
       returnKey[shortURLs] = database[shortURLs];
     }
   }
@@ -81,10 +67,10 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   let email = req.body.email;
-  let password = req.body.password;
+  let password = bcrypt.hashSync(req.body.password, 10);
   let userID = generateRandomString();
 
-  if (req.body.password === "" || req.body.password === "") {
+  if (req.body.email === "" || req.body.password === "") {
     res.status(400);
     return res.send("Error: No Username or Password was entered.");
   };
@@ -126,9 +112,10 @@ app.post("/login", (req, res) => {
   let email = req.body.email;
   let password = req.body.password;
 
+
   for (let index in users) {
     if (users[index].email === email) {
-      if (users[index].password !== password) {
+      if (!bcrypt.compareSync(password, users[index].password)) {
         res.status(403);
         return res.send("Error 403: That was an invalid login, please try again.");
       }
@@ -164,14 +151,14 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  if(typeof urlDatabase[req.params.id] === 'undefined'){
-    return res.send("Error: This URL is undefined.")
+  if (typeof urlDatabase[req.params.id] === 'undefined') {
+    return res.send("Error: This URL is undefined.");
   }
-  if(urlDatabase[req.params.id].userID !== req.cookies.id){
+  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
     return res.send("Error: You do not have permission to delete this URL.");
   }
-  if(req.cookies.id === undefined){
-    return res.send("Error: Please login first or create an account.")
+  if (req.cookies.id === undefined) {
+    return res.send("Error: Please login first or create an account.");
   }
   delete urlDatabase[(req.params.id)];
   res.redirect(`/urls/`);
@@ -183,7 +170,7 @@ app.post("/logout/", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  if(urlDatabase[req.params.id].userID !== req.cookies.id){
+  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
     return res.send("Error: You do not have permission to edit this URL.");
   }
   urlDatabase[(req.params.id)].longURL = req.body.longURL;
@@ -200,6 +187,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls", (req, res) => { //"/urls.json"
+  console.log(users);
   if (req.cookies.id === undefined) {
     return res.send("You must be logged in to view shorten URLs!");
   }
@@ -212,17 +200,17 @@ app.get("/urls", (req, res) => { //"/urls.json"
 });
 
 app.get("/urls/:id", (req, res) => {
-  if(typeof urlDatabase[req.params.id] === 'undefined'){
-    return res.send("Error: This URL is undefined.")
+  if (typeof urlDatabase[req.params.id] === 'undefined') {
+    return res.send("Error: This URL is undefined.");
   }
-  if(req.cookies.id === undefined){
-    return res.send("Error: Please login first or create an account.")
+  if (req.cookies.id === undefined) {
+    return res.send("Error: Please login first or create an account.");
   }
-  if(urlDatabase[req.params.id].userID !== req.cookies.id){
+  if (urlDatabase[req.params.id].userID !== req.cookies.id) {
     return res.send("Error: You do not have permission to edit this URL.");
   }
   const templateVars = {
-    id: req.params.id, 
+    id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies.id],
   };
